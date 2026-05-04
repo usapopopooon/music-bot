@@ -1,6 +1,6 @@
 # Lavalink v4 with LavaSrc + youtube-source. SPEC §7.8.5.
 
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 
 ARG LAVALINK_VERSION=4.0.8
 ARG LAVASRC_VERSION=4.4.0
