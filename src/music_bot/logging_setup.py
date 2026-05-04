@@ -7,7 +7,13 @@ import sys
 
 
 class _BotNameFilter(logging.Filter):
-    """Inject a default bot_name into every record so the formatter never KeyErrors."""
+    """Inject a default bot_name into every record so the formatter never KeyErrors.
+
+    Attached to the *handler* (not the logger) so that records propagated from
+    child loggers also pass through it — Python's logging only consults a logger's
+    filters when emitting via that logger directly, but handler filters run for
+    every record reaching that handler.
+    """
 
     def filter(self, record: logging.LogRecord) -> bool:
         if not hasattr(record, "bot_name"):
@@ -26,10 +32,9 @@ def configure_logging(level: str = "INFO") -> None:
         return
 
     root.setLevel(level)
-    # Filter on the root logger so every record (including third-party) gets bot_name.
-    root.addFilter(_BotNameFilter())
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(logging.Formatter(_FORMAT, datefmt=_DATEFMT))
+    handler.addFilter(_BotNameFilter())
     for h in list(root.handlers):
         root.removeHandler(h)
     root.addHandler(handler)
