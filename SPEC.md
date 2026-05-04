@@ -775,7 +775,7 @@ music-bot/
 3. もう一度 `Add Service` → 同じ GitHub Repo、サービス名 `lavalink`:
    - Settings → Build → **Builder: Dockerfile**、**Dockerfile Path: `lavalink/Dockerfile`**
    - Settings → Networking → Public Networking **OFF**、Internal Networking ON
-   - Settings → Deploy → Healthcheck Path **`/version`**、Timeout 300s（§10.5.1）
+   - Settings → Deploy → **Healthcheck 無効**（理由は §10.5.1）
 4. `Add Service` → `Database` → `Add PostgreSQL` で `postgres` サービスを追加。
 
 ### 10.2 Region 配置
@@ -848,13 +848,19 @@ Railway の Environments で `production` と `development` を分離。
 | サービス | Railway 設定 |
 |---|---|
 | `bot` | **Healthcheck 無効**（HTTP 公開なし）。クラッシュ検知 = プロセス exit のみ。1 Client でも生存していれば exit しない（§7.7.3） |
-| `lavalink` | **Healthcheck Path: `/version`**、Timeout 300s。失敗で自動再起動 |
+| `lavalink` | **Healthcheck 無効**（理由は §10.5.1） |
 | `postgres` | Managed のため設定不要 |
 
-#### 10.5.1 Lavalink ヘルスチェックの注意
+#### 10.5.1 Lavalink で Railway ヘルスチェックを使わない理由
 
-- **`/version` を使う**理由: Lavalink v4 の REST API は `/v4/*` 配下が `Authorization: <password>` ヘッダー必須なのに対し、`/version` は認証不要で生存確認に使える。Railway の Healthcheck は custom header を送れないため `/v4/info` だと常に 401 で失敗する。
-- **Timeout 300s**: 初回起動ではプラグイン JAR (LavaSrc + youtube-source) を Maven リポジトリから DL するのに 30〜60 秒かかる。コールドスタートで余裕を持たせるため 300 秒。プラグインが既にコンテナにキャッシュされている再起動時は数秒で完了する。
+Lavalink の REST API は `/v4/*` 配下がすべて `Authorization: <password>` ヘッダー必須。残る `/version` は認証不要だが、Public Networking OFF の private-networking サービスでは Railway の port 検出が安定せず、Lavalink が 2333 で listen していてもヘルスチェックが届かないケースがある。
+
+代替として **bot 側の HTTP プリフライト**（§7.5）が Lavalink への到達性を起動時に検証している:
+
+- bot は `setup_hook` で Lavalink の `/version` に GET を投げ、5 回まで 30 秒間隔でリトライ
+- 全失敗で bot プロセスが exit → Railway の `restartPolicyType = "ON_FAILURE"` で再起動
+
+Lavalink が落ちているのに bot だけ生きている状態は、bot 側のプリフライトと Wavelink ノード切断検知（§7.5 後半）の二段で検出されるため、Railway 側の重複チェックは不要。
 
 ### 10.6 エグレス課金の注意（重要）
 
@@ -886,7 +892,7 @@ Railway の Environments で `production` と `development` を分離。
 | ファイル | 対象 | Dockerfile Path | Healthcheck |
 |---|---|---|---|
 | `railway.toml`（リポジトリ root） | bot サービス | `Dockerfile` | 無効 |
-| `lavalink/railway.toml` | lavalink サービス | `lavalink/Dockerfile` | `/version`（§10.5.1） |
+| `lavalink/railway.toml` | lavalink サービス | `lavalink/Dockerfile` | 無効（§10.5.1） |
 
 `railway.toml`（bot 用）:
 ```toml
@@ -909,8 +915,7 @@ dockerfilePath = "Dockerfile"
 [deploy]
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-healthcheckPath = "/version"      # /v4/* は認証必須なため使えない（§10.5.1）
-healthcheckTimeout = 300          # 初回プラグイン DL に 30〜60s かかる余裕
+# Healthcheck は意図的に無効。理由は §10.5.1。
 ```
 
 > **重要**: lavalink サービスの **Settings → Source → Root Directory** を `/lavalink` にすること。Railway はリポジトリ root の `/railway.toml` を全サービスに適用しようとするので、Root Directory を切り替えないと `lavalink/railway.toml` が読み込まれず、bot 用の Dockerfile が誤ってビルドされる。

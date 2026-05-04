@@ -12,10 +12,6 @@ COPY --chown=lavalink:lavalink application.yml /opt/Lavalink/application.yml
 # Override LAVALINK_MAX_HEAP_MB at deploy time to size the heap.
 ENV LAVALINK_MAX_HEAP_MB=192
 
-# Railway routes healthcheck traffic to $PORT. Pin it to 2333 so it matches
-# the port Lavalink binds to (from application.yml `server.port: 2333`).
-ENV PORT=2333
-
 # Override the base ENTRYPOINT so we can apply -Xmx / -Xms / GC choice. exec
 # keeps Java as PID 1 so SIGTERM from Railway/Compose shuts it down cleanly.
 ENTRYPOINT ["/bin/sh", "-c", "exec java -Xms64m -Xmx${LAVALINK_MAX_HEAP_MB}m -XX:+UseSerialGC -jar Lavalink.jar"]

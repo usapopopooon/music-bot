@@ -7,9 +7,10 @@ dockerfilePath = "Dockerfile"
 [deploy]
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-# /version is unauthenticated; /v4/info requires the Authorization header which
-# Railway's healthcheck cannot send.
-healthcheckPath = "/version"
-# First start downloads LavaSrc + youtube-source plugins (30-60s on a cold
-# build), so give the healthcheck plenty of headroom.
-healthcheckTimeout = 300
+
+# Healthcheck is intentionally disabled. Railway's private-networking
+# port-detection does not reliably reach Lavalink on 2333, and Lavalink's
+# `/v4/*` endpoints all require an Authorization header that Railway's
+# healthcheck cannot send. The bot does its own HTTP preflight against
+# Lavalink at startup (SPEC §7.5: 5x retry then exit), so deployment
+# correctness is gated bot-side rather than via Railway's check.
