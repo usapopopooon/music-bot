@@ -1,14 +1,12 @@
 # music-bot
 
-Discord 音楽 Bot — [Jockie Music](https://jockiemusic.com) の挙動・コマンド体系・UX を可能な限り再現したオープン実装。
-**ギルドごとの音量設定の永続化** が独自仕様（Jockie 無料版では音量変更不可）。
-詳細仕様は [SPEC.md](SPEC.md) を参照。
+Discord 用の音楽 Bot。Lavalink ベースで安定再生、ボタン UI 中心の操作、ギルドごとの音量設定の永続化が特徴。詳細仕様は [SPEC.md](SPEC.md) を参照。
 
 ## 主な機能
 
 - **Music Control Panel** — `/play` 後にチャンネルへ常駐するボタン UI（再生/停止/スキップ/音量/シャッフル/ループ/キュー/追加/検索）
 - **対応音源** — YouTube / YouTube Music / Spotify / Apple Music / Deezer / SoundCloud（§3.1）
-- **マルチボット** — 1 プロセス内で最大 4 個の Discord Client を並走（Jockie #1〜#4 相当）
+- **マルチボット** — 1 プロセス内で最大 4 個の Discord Client を並走させて同一サーバー内の複数 VC をカバー
 - **ギルド単位の音量永続化** — `0–200%`、PostgreSQL に保存
 - **メモリ制御** — ハードリミット (`RLIMIT_AS`) とソフトリミット監視で OOM を回避
 - **slash command フォールバック** — UI 操作はすべて `/play` `/skip` `/queue` などの slash でも実行可能
