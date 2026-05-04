@@ -26,8 +26,6 @@ EXPOSE 2333
 ENV LAVALINK_MAX_HEAP_MB=192
 
 # JVM tuning per SPEC §7.8.5: small heap, SerialGC for low RSS.
-CMD java \
-    -Xms64m \
-    -Xmx${LAVALINK_MAX_HEAP_MB}m \
-    -XX:+UseSerialGC \
-    -jar Lavalink.jar
+# Use shell form so ${LAVALINK_MAX_HEAP_MB} is expanded at runtime; exec wrapper
+# keeps Java as PID 1 so SIGTERM from Railway/Compose terminates it cleanly.
+CMD ["sh", "-c", "exec java -Xms64m -Xmx${LAVALINK_MAX_HEAP_MB}m -XX:+UseSerialGC -jar Lavalink.jar"]

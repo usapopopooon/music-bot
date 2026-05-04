@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 
 from .bot import MusicBotClient
 from .db import Database
 from .lavalink import connect_lavalink
 from .memory_guard import SoftLimitMonitor
 from .routing import GuildLockRegistry
+
+_HookCoro = Callable[[], Awaitable[None]]
 
 logger = logging.getLogger(__name__)
 
@@ -71,23 +74,35 @@ class ClientSupervisor:
             try:
                 host, port, password, secure = self._lavalink
 
-                async def _start() -> None:
+                # Bind via default args so the closure captures the *current* values
+                # rather than referencing the loop-scope variables (ruff B023).
+                async def _start(
+                    _client: MusicBotClient = client,
+                    _host: str = host,
+                    _port: int = port,
+                    _password: str = password,
+                    _secure: bool = secure,
+                ) -> None:
                     await connect_lavalink(
-                        client=client,
-                        host=host,
-                        port=port,
-                        password=password,
-                        secure=secure,
+                        client=_client,
+                        host=_host,
+                        port=_port,
+                        password=_password,
+                        secure=_secure,
                     )
 
-                client.setup_hook = _replace_hook(client.setup_hook, _start)  # type: ignore[method-assign]
+                client.setup_hook = _replace_hook(client.setup_hook, _start)  # type: ignore[method-assign,assignment]
                 await client.start(self._token)
-                logger.info("Client %s exited cleanly", self._bot_name, extra={"bot_name": self._bot_name})
+                logger.info(
+                    "Client %s exited cleanly", self._bot_name, extra={"bot_name": self._bot_name}
+                )
                 return
             except Exception as exc:
                 logger.exception(
                     "Client %s crashed (attempt %d): %s",
-                    self._bot_name, attempt + 1, exc,
+                    self._bot_name,
+                    attempt + 1,
+                    exc,
                     extra={"bot_name": self._bot_name},
                 )
                 self.failures = attempt + 1
@@ -103,7 +118,8 @@ class ClientSupervisor:
             if attempt >= _MAX_RESTART_ATTEMPTS - 1:
                 logger.error(
                     "Client %s disabled after %d failed attempts",
-                    self._bot_name, _MAX_RESTART_ATTEMPTS,
+                    self._bot_name,
+                    _MAX_RESTART_ATTEMPTS,
                     extra={"bot_name": self._bot_name},
                 )
                 self.disabled = True
@@ -111,15 +127,17 @@ class ClientSupervisor:
 
             backoff = _RESTART_BACKOFFS[attempt]
             logger.warning(
-                "Client %s restarting in %ds", self._bot_name, backoff,
+                "Client %s restarting in %ds",
+                self._bot_name,
+                backoff,
                 extra={"bot_name": self._bot_name},
             )
             await asyncio.sleep(backoff)
             attempt += 1
 
 
-def _replace_hook(original, prepended_coro):  # type: ignore[no-untyped-def]
-    """Wrap a Client.setup_hook so that `prepended_coro` runs before it.
+def _replace_hook(original: _HookCoro, prepended: _HookCoro) -> _HookCoro:
+    """Wrap a Client.setup_hook so that `prepended` runs before it.
 
     discord.py runs setup_hook *before* connecting to the gateway, which is exactly
     where we need to attach to Lavalink (else the bot would appear online before
@@ -127,7 +145,7 @@ def _replace_hook(original, prepended_coro):  # type: ignore[no-untyped-def]
     """
 
     async def _wrapped() -> None:
-        await prepended_coro()
+        await prepended()
         await original()
 
     return _wrapped

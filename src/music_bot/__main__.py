@@ -78,9 +78,7 @@ async def _main() -> int:
             name="run-all",
         )
         stop_task = asyncio.create_task(stop_event.wait(), name="stop-signal")
-        done, _ = await asyncio.wait(
-            {run_task, stop_task}, return_when=asyncio.FIRST_COMPLETED
-        )
+        done, _ = await asyncio.wait({run_task, stop_task}, return_when=asyncio.FIRST_COMPLETED)
         if stop_task in done and not run_task.done():
             logger.info("Stop signal received, cancelling run-all")
             run_task.cancel()

@@ -35,9 +35,7 @@ class AddTrackModal(discord.ui.Modal, title="Add to queue"):
             return
         player = interaction.guild.voice_client
         if not isinstance(player, MusicPlayer):
-            await interaction.followup.send(
-                embed=embeds.error("Not connected."), ephemeral=True
-            )
+            await interaction.followup.send(embed=embeds.error("Not connected."), ephemeral=True)
             return
         await self.playback._enqueue(  # noqa: SLF001
             interaction, player, self.query.value, head=self.head
@@ -111,9 +109,7 @@ class SearchModal(discord.ui.Modal, title="Search"):
         await interaction.response.defer(thinking=True, ephemeral=True)
         results = await self.playback._resolve_or_search(f"ytsearch:{self.query.value}")  # noqa: SLF001
         if not results:
-            await interaction.followup.send(
-                embed=embeds.error("No results."), ephemeral=True
-            )
+            await interaction.followup.send(embed=embeds.error("No results."), ephemeral=True)
             return
         if isinstance(results, wavelink.Playlist):
             tracks = list(results.tracks)
@@ -173,5 +169,5 @@ class SearchSelectView(discord.ui.View):
                 embed=embeds.success(f"Added: **{track.title}**"), ephemeral=True
             )
 
-        select.callback = _picked  # type: ignore[assignment]
+        select.callback = _picked  # type: ignore[method-assign]
         self.add_item(select)

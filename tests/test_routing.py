@@ -25,7 +25,7 @@ def test_all_idle_picks_lowest_id() -> None:
 def test_already_in_user_vc_wins() -> None:
     cands = [
         ClientCandidate(bot_id=100, connected_channel_id=None),  # idle, lowest id
-        ClientCandidate(bot_id=200, connected_channel_id=42),    # already in user's VC
+        ClientCandidate(bot_id=200, connected_channel_id=42),  # already in user's VC
         ClientCandidate(bot_id=300, connected_channel_id=None),
     ]
     assert select_client(cands, user_voice_channel_id=42) == 200

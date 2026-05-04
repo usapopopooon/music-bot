@@ -24,9 +24,7 @@ async def test_migration_creates_table(pg_pool: asyncpg.Pool, database_url: str)
     db = await Database.connect(database_url, pool_size=2)
     try:
         async with pg_pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT to_regclass('guild_bot_settings') AS r"
-            )
+            row = await conn.fetchrow("SELECT to_regclass('guild_bot_settings') AS r")
         assert row is not None
         assert row["r"] == "guild_bot_settings"
     finally:

@@ -5,7 +5,8 @@ FROM python:3.12-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
@@ -18,13 +19,15 @@ COPY --from=ghcr.io/astral-sh/uv:0.5.4 /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Copy lock + manifest first to maximize layer caching (SPEC §10.7.2)
-COPY pyproject.toml uv.lock* ./
-RUN uv sync --frozen --no-cache --no-dev || uv sync --no-cache --no-dev
+# Step 1: install dependencies only (no project) to maximize layer caching.
+# `--no-install-project` skips building our own package, so we don't need src/ or README yet.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-cache --no-dev --no-install-project
 
-# Copy source last
+# Step 2: copy the project files needed to build music-bot itself, then sync.
+COPY README.md ./
 COPY src ./src
-RUN uv sync --frozen --no-cache --no-dev || uv sync --no-cache --no-dev
+RUN uv sync --frozen --no-cache --no-dev
 
 
 # ---------- Runtime ----------
@@ -48,7 +51,7 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/src /app/src
 
-# Non-root user (SPEC §13: defense in depth, not required by spec, but standard hygiene).
+# Non-root user.
 RUN useradd --create-home --shell /usr/sbin/nologin app && chown -R app:app /app
 USER app
 

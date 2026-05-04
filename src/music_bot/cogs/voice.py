@@ -157,7 +157,10 @@ class VoiceCog(commands.Cog):
         if player.playing or not player.queue.is_empty:
             return
         guild_id = player.guild.id
-        if guild_id in self._auto_disconnect_tasks and not self._auto_disconnect_tasks[guild_id].done():
+        if (
+            guild_id in self._auto_disconnect_tasks
+            and not self._auto_disconnect_tasks[guild_id].done()
+        ):
             return
         self._auto_disconnect_tasks[guild_id] = asyncio.create_task(
             self._auto_disconnect_after_idle(player),
@@ -177,7 +180,8 @@ class VoiceCog(commands.Cog):
         if player.playing or not player.queue.is_empty:
             return
         logger.info(
-            "Auto-disconnect after %ds idle", _AUTO_DISCONNECT_SEC,
+            "Auto-disconnect after %ds idle",
+            _AUTO_DISCONNECT_SEC,
             extra={"bot_name": self.bot.bot_name},
         )
         await self._teardown_player(player)
@@ -191,10 +195,7 @@ class VoiceCog(commands.Cog):
         player.last_track = payload.track
         # Drop the requester entry for the just-ended track unless it is being requeued
         # (loop=track or loop=queue keeps it alive). SPEC §7.9.2: bound requester memory.
-        if (
-            payload.track.identifier
-            and player.queue.mode == wavelink.QueueMode.normal
-        ):
+        if payload.track.identifier and player.queue.mode == wavelink.QueueMode.normal:
             player.requesters.pop(payload.track.identifier, None)
         if player.channel is None or player.guild is None:
             return

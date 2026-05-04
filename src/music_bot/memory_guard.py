@@ -25,9 +25,7 @@ def apply_hard_limit(limit_mb: int | None) -> None:
 
     system = platform.system()
     if system == "Darwin":
-        logger.warning(
-            "MEMORY_LIMIT_MB=%d ignored: RLIMIT_AS is non-functional on macOS", limit_mb
-        )
+        logger.warning("MEMORY_LIMIT_MB=%d ignored: RLIMIT_AS is non-functional on macOS", limit_mb)
         return
     if system == "Windows":
         logger.warning(
@@ -105,9 +103,7 @@ class SoftLimitMonitor:
                 elif pressured:
                     now = loop.time()
                     if now - self._last_warn_at > _WARN_THROTTLE_SEC:
-                        logger.warning(
-                            "Memory pressure ongoing (rss=%d MB)", rss // (1024 * 1024)
-                        )
+                        logger.warning("Memory pressure ongoing (rss=%d MB)", rss // (1024 * 1024))
                         self._last_warn_at = now
             except Exception:
                 logger.exception("SoftLimitMonitor loop iteration failed")

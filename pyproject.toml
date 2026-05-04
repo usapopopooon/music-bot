@@ -51,12 +51,16 @@ select = [
     "C4",
     "RET",
     "SIM",
-    "TID",
 ]
 ignore = [
-    "S101",
-    "S311",
-    "E501",
+    "S101",   # asserts in tests
+    "S311",   # non-crypto random
+    "E501",   # line length (formatter handles it)
+    "S110",   # try/except/pass (used intentionally for cleanup paths)
+    "SIM105", # contextlib.suppress over try/except/pass — readability tradeoff
+    "SIM108", # ternary over if/else
+    "RET504", # unnecessary assignment before return — sometimes clearer
+    "B008",   # discord.py uses default-call patterns (e.g., commands.Cog descriptors)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -72,8 +76,8 @@ files = ["src"]
 plugins = []
 
 [[tool.mypy.overrides]]
-module = ["wavelink.*", "discord.*", "asyncpg.*"]
-ignore_missing_imports = false
+module = ["asyncpg.*", "wavelink.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

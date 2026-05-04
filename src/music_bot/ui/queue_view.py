@@ -98,7 +98,7 @@ class QueueView(discord.ui.View):
                 self._rebuild()
                 await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-            select.callback = _picked  # type: ignore[assignment]
+            select.callback = _picked  # type: ignore[method-assign]
             self.add_item(select)
 
         # Row 1: per-track ops (apply to self._selected_index)
@@ -108,15 +108,21 @@ class QueueView(discord.ui.View):
         on_bottom = idx is not None and idx >= total - 1
 
         self.add_item(_OpButton(self, op="up", label="⬆", disabled=idx is None or on_top, row=1))
-        self.add_item(_OpButton(self, op="down", label="⬇", disabled=idx is None or on_bottom, row=1))
-        self.add_item(_OpButton(self, op="top", label="🔝 Top", disabled=idx is None or on_top, row=1))
+        self.add_item(
+            _OpButton(self, op="down", label="⬇", disabled=idx is None or on_bottom, row=1)
+        )
+        self.add_item(
+            _OpButton(self, op="top", label="🔝 Top", disabled=idx is None or on_top, row=1)
+        )
         self.add_item(_OpButton(self, op="remove", label="🗑 Remove", disabled=idx is None, row=1))
         self.add_item(_OpButton(self, op="jump", label="▶ Jump", disabled=idx is None, row=1))
 
         # Row 2: paging / global ops
         self.add_item(_PageButton(self, delta=-1, label="◀ Prev", disabled=self.page <= 1, row=2))
         self.add_item(
-            _PageButton(self, delta=1, label="Next ▶", disabled=self.page >= self.total_pages, row=2)
+            _PageButton(
+                self, delta=1, label="Next ▶", disabled=self.page >= self.total_pages, row=2
+            )
         )
         self.add_item(_OpButton(self, op="shuffle", label="🔀 Shuffle", disabled=total == 0, row=2))
         self.add_item(_OpButton(self, op="clear", label="🧹 Clear", disabled=total == 0, row=2))
@@ -132,21 +138,21 @@ class _PageButton(discord.ui.Button[QueueView]):
             disabled=disabled,
             row=row,
         )
-        self._view = view
+        self._owner = view
         self.delta = delta
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        allowed, reason = self._view._check(interaction)  # noqa: SLF001
+        allowed, reason = self._owner._check(interaction)  # noqa: SLF001
         if not allowed:
             await interaction.response.send_message(
                 embed=embed_helpers.error(reason or "Not allowed"), ephemeral=True
             )
             return
-        self._view.page = max(1, min(self._view.page + self.delta, self._view.total_pages))
+        self._owner.page = max(1, min(self._owner.page + self.delta, self._owner.total_pages))
         # Selection may now be off-page; clear it.
-        self._view._selected_index = None  # noqa: SLF001
-        self._view._rebuild()  # noqa: SLF001
-        await interaction.response.edit_message(embed=self._view.build_embed(), view=self._view)
+        self._owner._selected_index = None  # noqa: SLF001
+        self._owner._rebuild()  # noqa: SLF001
+        await interaction.response.edit_message(embed=self._owner.build_embed(), view=self._owner)
 
 
 class _OpButton(discord.ui.Button[QueueView]):
@@ -158,7 +164,11 @@ class _OpButton(discord.ui.Button[QueueView]):
         disabled: bool = False,
         row: int = 1,
     ) -> None:
-        style = discord.ButtonStyle.danger if op in ("remove", "clear") else discord.ButtonStyle.secondary
+        style = (
+            discord.ButtonStyle.danger
+            if op in ("remove", "clear")
+            else discord.ButtonStyle.secondary
+        )
         super().__init__(
             style=style,
             label=label,
@@ -166,11 +176,11 @@ class _OpButton(discord.ui.Button[QueueView]):
             disabled=disabled,
             row=row,
         )
-        self._view = view
+        self._owner = view
         self.op = op
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        view = self._view
+        view = self._owner
         allowed, reason = view._check(interaction)  # noqa: SLF001
         if not allowed:
             await interaction.response.send_message(
@@ -182,9 +192,7 @@ class _OpButton(discord.ui.Button[QueueView]):
         op = self.op
 
         if op == "close":
-            await interaction.response.edit_message(
-                embed=embed_helpers.info("Closed."), view=None
-            )
+            await interaction.response.edit_message(embed=embed_helpers.info("Closed."), view=None)
             view.stop()
             return
 

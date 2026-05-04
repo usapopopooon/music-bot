@@ -97,7 +97,9 @@ class QueueCog(commands.Cog):
             embed=embeds.success(f"Moved **{track.title}** → position {to_pos}."), ephemeral=True
         )
 
-    @app_commands.command(name="jump", description="Jump to a queue position (history is not affected).")
+    @app_commands.command(
+        name="jump", description="Jump to a queue position (history is not affected)."
+    )
     @app_commands.describe(position="1-indexed position.")
     async def jump(
         self, interaction: discord.Interaction, position: app_commands.Range[int, 1, 10000]
@@ -196,9 +198,7 @@ def render_queue_embed(player: MusicPlayer, page: int) -> discord.Embed:
     """Render a queue page (10 items). See SPEC §5.4."""
     total = len(player.queue)
     if total == 0:
-        return discord.Embed(
-            title="📜 Queue", description="The queue is empty.", color=0x5865F2
-        )
+        return discord.Embed(title="📜 Queue", description="The queue is empty.", color=0x5865F2)
     pages = max(1, (total + QUEUE_PAGE_SIZE - 1) // QUEUE_PAGE_SIZE)
     page = max(1, min(page, pages))
     start = (page - 1) * QUEUE_PAGE_SIZE

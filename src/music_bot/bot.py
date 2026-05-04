@@ -78,7 +78,8 @@ class MusicBotClient(commands.Bot):
 
     async def setup_hook(self) -> None:
         """discord.py lifecycle hook: load cogs, sync commands."""
-        from .cogs import playback, queue as queue_cog, voice, volume  # noqa: PLC0415
+        from .cogs import playback, voice, volume  # noqa: PLC0415
+        from .cogs import queue as queue_cog
 
         await self.add_cog(playback.PlaybackCog(self))
         await self.add_cog(queue_cog.QueueCog(self))

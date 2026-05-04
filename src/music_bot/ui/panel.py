@@ -102,16 +102,12 @@ class ControlPanel:
             except asyncio.CancelledError:
                 return
             except Exception:
-                logger.exception(
-                    "Panel refresh loop error", extra={"bot_name": self.bot.bot_name}
-                )
+                logger.exception("Panel refresh loop error", extra={"bot_name": self.bot.bot_name})
 
     def _build_embed(self, *, force_terminated: bool = False) -> discord.Embed:
         player = self.player
         if force_terminated or player is None or not player.connected:
-            embed = discord.Embed(
-                title="🎵 Disconnected", color=embed_helpers.COLOR_TERMINATED
-            )
+            embed = discord.Embed(title="🎵 Disconnected", color=embed_helpers.COLOR_TERMINATED)
             return embed
 
         track = player.current
@@ -140,7 +136,9 @@ class ControlPanel:
             time_field = "🔴 LIVE"
         else:
             bar = make_progress_bar(player.position, track.length)
-            time_field = f"{bar}  `{format_duration(player.position)} / {format_duration(track.length)}`"
+            time_field = (
+                f"{bar}  `{format_duration(player.position)} / {format_duration(track.length)}`"
+            )
         embed.add_field(name="​", value=time_field, inline=False)
 
         upcoming = _peek_next(player)
@@ -440,9 +438,7 @@ class _QueueButton(discord.ui.Button[ControlPanelView]):
         from .queue_view import QueueView  # noqa: PLC0415
 
         view = QueueView(self.panel, player, page=1)
-        await interaction.response.send_message(
-            embed=view.build_embed(), view=view, ephemeral=True
-        )
+        await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
 
 
 class _LeaveButton(discord.ui.Button[ControlPanelView]):
@@ -488,9 +484,7 @@ class _VolumeStepButton(discord.ui.Button[ControlPanelView]):
         new = max(0, min(200, player.volume + self.delta))
         await player.set_volume(new)
         if interaction.guild is not None and self.panel.bot.user is not None:
-            await self.panel.bot.db.set_volume(
-                interaction.guild.id, self.panel.bot.user.id, new
-            )
+            await self.panel.bot.db.set_volume(interaction.guild.id, self.panel.bot.user.id, new)
         await self.panel.refresh()
         await interaction.response.defer()
 

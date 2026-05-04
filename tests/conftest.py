@@ -12,9 +12,7 @@ import pytest_asyncio
 
 @pytest.fixture(scope="session")
 def database_url() -> str:
-    return os.environ.get(
-        "DATABASE_URL", "postgres://postgres:test@localhost:5432/music_bot_test"
-    )
+    return os.environ.get("DATABASE_URL", "postgres://postgres:test@localhost:5432/music_bot_test")
 
 
 @pytest_asyncio.fixture(autouse=True)

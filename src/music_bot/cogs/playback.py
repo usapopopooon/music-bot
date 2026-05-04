@@ -65,15 +65,11 @@ class PlaybackCog(commands.Cog):
             cands.append(ClientCandidate(bot_id=client.user.id, connected_channel_id=ch_id))
         return cands
 
-    async def _resolve_or_search(
-        self, query: str
-    ) -> wavelink.Search:
+    async def _resolve_or_search(self, query: str) -> wavelink.Search:
         """Run Lavalink search; mostly a thin wrapper for testability."""
         return await wavelink.Playable.search(query)
 
-    async def _ensure_player(
-        self, interaction: discord.Interaction
-    ) -> MusicPlayer | None:
+    async def _ensure_player(self, interaction: discord.Interaction) -> MusicPlayer | None:
         """Connect to the user's VC (or return existing player). Returns None on error
         (and sends an ephemeral response itself)."""
         if interaction.guild is None:
@@ -130,7 +126,9 @@ class PlaybackCog(commands.Cog):
 
     # ---------- Commands ----------
 
-    @app_commands.command(name="play", description="Play a track or playlist (URL or search query).")
+    @app_commands.command(
+        name="play", description="Play a track or playlist (URL or search query)."
+    )
     @app_commands.describe(query="URL or search query.")
     async def play(self, interaction: discord.Interaction, query: str) -> None:
         if interaction.guild is None:
@@ -184,7 +182,9 @@ class PlaybackCog(commands.Cog):
             return
         await self._enqueue(interaction, player, query, head=True)
 
-    @app_commands.command(name="playnow", description="Play a track immediately, skipping the current one.")
+    @app_commands.command(
+        name="playnow", description="Play a track immediately, skipping the current one."
+    )
     @app_commands.describe(query="URL or search query.")
     async def playnow(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer(thinking=True, ephemeral=True)
@@ -201,9 +201,7 @@ class PlaybackCog(commands.Cog):
         await interaction.response.defer(thinking=True, ephemeral=True)
         results = await self._resolve_or_search(f"ytsearch:{query}")
         if not results:
-            await interaction.followup.send(
-                embed=embeds.error("No results."), ephemeral=True
-            )
+            await interaction.followup.send(embed=embeds.error("No results."), ephemeral=True)
             return
         # Build a select menu (top 5)
         from ..ui.modals import SearchSelectView  # noqa: PLC0415
@@ -225,15 +223,15 @@ class PlaybackCog(commands.Cog):
         try:
             results = await self._resolve_or_search(query)
         except Exception as exc:
-            logger.warning("Search failed for %r: %s", query, exc, extra={"bot_name": self.bot.bot_name})
+            logger.warning(
+                "Search failed for %r: %s", query, exc, extra={"bot_name": self.bot.bot_name}
+            )
             await interaction.followup.send(
                 embed=embeds.error("Failed to load that track."), ephemeral=True
             )
             return
         if not results:
-            await interaction.followup.send(
-                embed=embeds.error("No results."), ephemeral=True
-            )
+            await interaction.followup.send(embed=embeds.error("No results."), ephemeral=True)
             return
 
         added: list[wavelink.Playable] = []
@@ -245,9 +243,7 @@ class PlaybackCog(commands.Cog):
         # Enforce MAX_QUEUE_SIZE.
         capacity = self.bot.max_queue_size - len(player.queue)
         if capacity <= 0:
-            await interaction.followup.send(
-                embed=embeds.error("Queue is full."), ephemeral=True
-            )
+            await interaction.followup.send(embed=embeds.error("Queue is full."), ephemeral=True)
             return
         tracks = tracks[: max(0, capacity)]
 
@@ -270,9 +266,7 @@ class PlaybackCog(commands.Cog):
             msg = f"Added **{len(added)}** tracks."
         await interaction.followup.send(embed=embeds.success(msg), ephemeral=True)
 
-    async def _ensure_panel(
-        self, interaction: discord.Interaction, player: MusicPlayer
-    ) -> None:
+    async def _ensure_panel(self, interaction: discord.Interaction, player: MusicPlayer) -> None:
         from ..ui.panel import ControlPanel  # noqa: PLC0415
 
         if player.panel is None and interaction.channel is not None:
@@ -291,9 +285,7 @@ class PlaybackCog(commands.Cog):
         await player.pause(True)
         if player.panel:
             await player.panel.refresh()
-        await interaction.response.send_message(
-            embed=embeds.success("Paused."), ephemeral=True
-        )
+        await interaction.response.send_message(embed=embeds.success("Paused."), ephemeral=True)
 
     @app_commands.command(name="resume", description="Resume playback.")
     async def resume(self, interaction: discord.Interaction) -> None:
@@ -303,9 +295,7 @@ class PlaybackCog(commands.Cog):
         await player.pause(False)
         if player.panel:
             await player.panel.refresh()
-        await interaction.response.send_message(
-            embed=embeds.success("Resumed."), ephemeral=True
-        )
+        await interaction.response.send_message(embed=embeds.success("Resumed."), ephemeral=True)
 
     @app_commands.command(name="skip", description="Skip the current track.")
     async def skip(self, interaction: discord.Interaction) -> None:
@@ -313,13 +303,15 @@ class PlaybackCog(commands.Cog):
         if player is None:
             return
         await player.skip(force=True)
-        await interaction.response.send_message(
-            embed=embeds.success("Skipped."), ephemeral=True
-        )
+        await interaction.response.send_message(embed=embeds.success("Skipped."), ephemeral=True)
 
-    @app_commands.command(name="skipto", description="Skip to a queue position (treats skipped as played).")
+    @app_commands.command(
+        name="skipto", description="Skip to a queue position (treats skipped as played)."
+    )
     @app_commands.describe(position="1-indexed position.")
-    async def skipto(self, interaction: discord.Interaction, position: app_commands.Range[int, 1, 10000]) -> None:
+    async def skipto(
+        self, interaction: discord.Interaction, position: app_commands.Range[int, 1, 10000]
+    ) -> None:
         player = await _player_or_error(interaction)
         if player is None:
             return
@@ -350,11 +342,11 @@ class PlaybackCog(commands.Cog):
             player.queue.put_at(0, player.current)
         player.queue.put_at(0, prev)
         await player.skip(force=True)
-        await interaction.response.send_message(
-            embed=embeds.success("Going back."), ephemeral=True
-        )
+        await interaction.response.send_message(embed=embeds.success("Going back."), ephemeral=True)
 
-    @app_commands.command(name="replay", description="Restart the current track from the beginning.")
+    @app_commands.command(
+        name="replay", description="Restart the current track from the beginning."
+    )
     async def replay(self, interaction: discord.Interaction) -> None:
         player = await _player_or_error(interaction)
         if player is None:
@@ -365,9 +357,7 @@ class PlaybackCog(commands.Cog):
             )
             return
         await player.seek(0)
-        await interaction.response.send_message(
-            embed=embeds.success("Replaying."), ephemeral=True
-        )
+        await interaction.response.send_message(embed=embeds.success("Replaying."), ephemeral=True)
 
     @app_commands.command(name="seek", description="Seek to a time (HH:MM:SS or MM:SS or seconds).")
     @app_commands.describe(time="Target time, e.g. 01:23 or 90.")
@@ -434,9 +424,7 @@ class PlaybackCog(commands.Cog):
         await player.stop()
         if player.panel:
             await player.panel.terminate()
-        await interaction.response.send_message(
-            embed=embeds.success("Stopped."), ephemeral=True
-        )
+        await interaction.response.send_message(embed=embeds.success("Stopped."), ephemeral=True)
 
     @app_commands.command(name="grab", description="Send the current track to your DM.")
     async def grab(self, interaction: discord.Interaction) -> None:
