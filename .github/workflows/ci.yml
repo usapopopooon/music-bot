@@ -9,7 +9,7 @@ jobs:
   lint-and-type:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
@@ -35,7 +35,7 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:test@localhost:5432/music_bot_test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
@@ -52,7 +52,7 @@ jobs:
           - { name: bot, context: ".", file: "Dockerfile" }
           - { name: lavalink, context: "./lavalink", file: "lavalink/Dockerfile" }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
         with:
