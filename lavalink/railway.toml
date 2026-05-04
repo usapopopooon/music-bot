@@ -1,9 +1,15 @@
 [build]
 builder = "dockerfile"
-dockerfilePath = "lavalink/Dockerfile"
+# Path is relative to this railway.toml's directory (= the lavalink service's
+# Root Directory on Railway, which must be set to `/lavalink`).
+dockerfilePath = "Dockerfile"
 
 [deploy]
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-healthcheckPath = "/v4/info"
-healthcheckTimeout = 10
+# /version is unauthenticated; /v4/info requires the Authorization header which
+# Railway's healthcheck cannot send.
+healthcheckPath = "/version"
+# First start downloads LavaSrc + youtube-source plugins (30-60s on a cold
+# build), so give the healthcheck plenty of headroom.
+healthcheckTimeout = 300
