@@ -1,9 +1,12 @@
 name: docker
 
+# Publish to GHCR only on tagged releases (v*).
+# Railway deploys directly from GitHub on main push, so we don't need to publish
+# every commit to GHCR. Run a manual `workflow_dispatch` if you want a one-off.
 on:
   push:
-    branches: [main]
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -41,3 +44,5 @@ jobs:
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,scope=${{ matrix.image.name }},mode=max

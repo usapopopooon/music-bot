@@ -2,6 +2,7 @@ name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -42,9 +43,23 @@ jobs:
       - run: uv run pytest --cov=music_bot --cov-report=term-missing
 
   docker-build:
+    # Only verify Dockerfiles on PRs — main push goes through docker.yml on tag.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - { name: bot, context: ".", file: "Dockerfile" }
+          - { name: lavalink, context: "./lavalink", file: "lavalink/Dockerfile" }
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - run: docker build --target=runtime -t music-bot:ci .
-      - run: docker build -t lavalink:ci ./lavalink
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.file }}
+          push: false
+          load: true
+          tags: ${{ matrix.image.name }}:ci
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,scope=${{ matrix.image.name }},mode=max
