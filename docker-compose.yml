@@ -1,0 +1,52 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      lavalink:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      LAVALINK_HOST: lavalink
+      LAVALINK_PORT: 2333
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/music_bot
+    restart: unless-stopped
+
+  lavalink:
+    build:
+      context: ./lavalink
+      dockerfile: Dockerfile
+    environment:
+      LAVALINK_SERVER_PASSWORD: ${LAVALINK_PASSWORD:-youshallnotpass}
+      LAVALINK_MAX_HEAP_MB: ${LAVALINK_MAX_HEAP_MB:-192}
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:-}
+      APPLE_MUSIC_TOKEN: ${APPLE_MUSIC_TOKEN:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2333/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: music_bot
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d music_bot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

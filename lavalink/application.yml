@@ -1,0 +1,97 @@
+# Lavalink v4 config. SPEC §3.1, §7.8.5.
+
+server:
+  port: 2333
+  address: 0.0.0.0
+
+lavalink:
+  plugins:
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.4.0"
+      repository: "https://maven.lavalink.dev/releases"
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.11.4"
+      repository: "https://maven.lavalink.dev/releases"
+  server:
+    password: "${LAVALINK_SERVER_PASSWORD}"
+    sources:
+      youtube: false   # core source disabled; youtube-source plugin handles it
+      bandcamp: false  # SPEC §3.1.2
+      soundcloud: true
+      twitch: false    # SPEC §3.1.2
+      vimeo: false     # SPEC §3.1.2
+      http: false      # SPEC §3.1.2
+      local: false     # SPEC §3.1.2
+    filters:
+      volume: true
+      equalizer: true
+      karaoke: true
+      timescale: true
+      tremolo: true
+      vibrato: true
+      distortion: true
+      rotation: true
+      channelMix: true
+      lowPass: true
+    bufferDurationMs: 400
+    frameBufferDurationMs: 1000
+    opusEncodingQuality: 10
+    resamplingQuality: LOW
+    trackStuckThresholdMs: 10000
+    useSeekGhosting: false
+    youtubePlaylistLoadLimit: 6
+    playerUpdateInterval: 5
+    youtubeSearchEnabled: true
+    soundcloudSearchEnabled: true
+    gc-warnings: true
+
+plugins:
+  lavasrc:
+    providers:
+      - "ytsearch:\"%ISRC%\""
+      - "ytsearch:%QUERY%"
+    sources:
+      spotify: true
+      applemusic: true
+      deezer: true
+      yandexmusic: false
+      flowerytts: false
+      youtube: false   # delegated to youtube-source
+    spotify:
+      clientId: "${SPOTIFY_CLIENT_ID:}"
+      clientSecret: "${SPOTIFY_CLIENT_SECRET:}"
+      countryCode: "JP"
+    applemusic:
+      countryCode: "JP"
+      mediaAPIToken: "${APPLE_MUSIC_TOKEN:}"
+    deezer:
+      masterDecryptionKey: "g4el58wc0zvf9na1"
+    searchLimit: 10
+
+  youtube:
+    enabled: true
+    allowSearch: true
+    allowDirectVideoIds: true
+    allowDirectPlaylistIds: true
+    clients:
+      - MUSIC
+      - WEB
+      - WEBEMBEDDED
+      - ANDROID_VR
+      - ANDROID_MUSIC
+      - TVHTML5EMBEDDED
+
+logging:
+  file:
+    path: ./logs/
+  level:
+    root: INFO
+    lavalink: INFO
+  request:
+    enabled: false
+  logback:
+    rollingpolicy:
+      max-file-size: 25MB
+      max-history: 7
+
+metrics:
+  prometheus:
+    enabled: false
