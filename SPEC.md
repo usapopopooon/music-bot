@@ -555,7 +555,7 @@ lavalink:
 
 - `discord.Intents` は `guilds` と `voice_states` のみ有効化。`members` / `presences` / `message_content` / `messages` は無効。
 - `chunk_guilds_at_startup=False`（起動時に全メンバーを取得しない）。
-- `member_cache_flags=discord.MemberCacheFlags.none()`（メンバーキャッシュを完全に無効化）。
+- `member_cache_flags=discord.MemberCacheFlags(voice=True)`（VC に在室中のメンバーのみキャッシュ）。`none()` にすると `VoiceChannel.members` が空配列になり、§7.1 の「VC に Bot 以外がいなくなったら切断」判定が誤作動する（誰か 1 人退室した瞬間に切断される）。
 - `max_messages=None`（メッセージキャッシュを完全に無効化。既定 1000 件 / ギルドの内部キャッシュを廃止）。
 - ギルド情報のフェッチは必要最小限。`Guild.fetch_*` 系を使う場合もキャッシュしない。
 

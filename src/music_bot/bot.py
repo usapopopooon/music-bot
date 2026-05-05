@@ -25,6 +25,17 @@ def build_intents() -> discord.Intents:
     return intents
 
 
+def build_member_cache_flags() -> discord.MemberCacheFlags:
+    """Cache only voice-channel members. SPEC §7.9.1.
+
+    `MemberCacheFlags(voice=True)` keeps `joined=True` from the default and
+    requires the privileged `members` intent — so build from `none()` instead.
+    """
+    flags = discord.MemberCacheFlags.none()
+    flags.voice = True
+    return flags
+
+
 class MusicBotClient(commands.Bot):
     """A single Discord Client. N of these run in one process (SPEC §7.7).
 
@@ -48,7 +59,7 @@ class MusicBotClient(commands.Bot):
             command_prefix="!",  # unused; we only register slash commands
             intents=build_intents(),
             chunk_guilds_at_startup=False,
-            member_cache_flags=discord.MemberCacheFlags.none(),
+            member_cache_flags=build_member_cache_flags(),
             max_messages=None,
             help_command=None,
         )
