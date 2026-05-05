@@ -7,7 +7,7 @@ Lavalink ベースで再生する Discord 用の音楽 Bot。詳細仕様は [SP
 - **Music Control Panel** — `/play` 後にチャンネルへ常駐するボタン UI（再生/停止/スキップ/音量/シャッフル/ループ/キュー/追加/検索）
 - **対応音源** — YouTube / YouTube Music / Spotify / Apple Music / Deezer / SoundCloud（§3.1）
 - **マルチボット** — 1 プロセス内で最大 4 個の Discord Client を並走させて同一サーバー内の複数 VC をカバー
-- **ギルド単位の音量永続化** — `0–200%`、PostgreSQL に保存
+- **ギルド単位の音量永続化** — `0–100%`（既定 1%、Lavalink 側では増幅しないようハーフ振幅にクランプ）、PostgreSQL に保存
 - **メモリ制御** — ハードリミット (`RLIMIT_AS`) とソフトリミット監視で OOM を回避
 - **slash command フォールバック** — UI 操作はすべて `/play` `/skip` `/queue` などの slash でも実行可能
 
