@@ -46,6 +46,8 @@ class MusicPlayer(wavelink.Player):
         self.panel: ControlPanel | None = None
         self.requesters: dict[str, int] = {}
         self._display_volume: int = DEFAULT_DISPLAY_VOLUME
+        # Session-only override. When True, disable instant auto-disconnect on empty VC.
+        self.stay_alone: bool = False
 
     @property
     def display_volume(self) -> int:

@@ -1,11 +1,10 @@
-"""Voice connection management (`/join`, `/disconnect`) and auto-disconnect.
+"""Voice connection management (`/join`, `/disconnect`, `/stayalone`) and auto-disconnect.
 
 See SPEC §7.1.
 """
 
 from __future__ import annotations
 
-import asyncio
 import gc
 import logging
 from typing import TYPE_CHECKING
@@ -24,13 +23,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_AUTO_DISCONNECT_SEC = 5 * 60
-
 
 class VoiceCog(commands.Cog):
     def __init__(self, bot: MusicBotClient) -> None:
         self.bot = bot
-        self._auto_disconnect_tasks: dict[int, asyncio.Task[None]] = {}
 
     @app_commands.command(name="join", description="Have the bot join your voice channel.")
     async def join(self, interaction: discord.Interaction) -> None:
@@ -98,9 +94,44 @@ class VoiceCog(commands.Cog):
             embed=embeds.success("Disconnected."), ephemeral=True
         )
 
+    @app_commands.command(
+        name="stayalone",
+        description="Toggle whether the bot stays connected when the VC has no humans.",
+    )
+    async def stayalone(self, interaction: discord.Interaction) -> None:
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                embed=embeds.error("This command must be used in a server."), ephemeral=True
+            )
+            return
+        player = interaction.guild.voice_client
+        if not isinstance(player, MusicPlayer):
+            await interaction.response.send_message(
+                embed=embeds.error("Not connected."), ephemeral=True
+            )
+            return
+        allowed, reason = can_control_player(interaction.user, player.channel)
+        if not allowed:
+            await interaction.response.send_message(
+                embed=embeds.error(reason or "Not allowed"), ephemeral=True
+            )
+            return
+        player.stay_alone = not player.stay_alone
+        state = "ON" if player.stay_alone else "OFF"
+        await interaction.response.send_message(
+            embed=embeds.success(f"stay-alone: **{state}**"), ephemeral=True
+        )
+        # If the user just turned it OFF in an already-empty VC, honor the new policy
+        # immediately rather than waiting for the next voice-state event.
+        if (
+            not player.stay_alone
+            and player.channel is not None
+            and humans_in_channel(player.channel) == 0
+        ):
+            await self._teardown_player(player)
+
     async def _teardown_player(self, player: MusicPlayer) -> None:
         """Hard cleanup. SPEC §7.9.4: collect, drop refs, then collect again."""
-        guild_id = player.guild.id if player.guild else None
         if player.panel is not None:
             await player.panel.terminate()
         try:
@@ -120,11 +151,6 @@ class VoiceCog(commands.Cog):
         self.bot.decrement_players()
         gc.collect(generation=2)
 
-        if guild_id is not None:
-            task = self._auto_disconnect_tasks.pop(guild_id, None)
-            if task is not None and not task.done():
-                task.cancel()
-
     @commands.Cog.listener()
     async def on_voice_state_update(
         self,
@@ -132,60 +158,26 @@ class VoiceCog(commands.Cog):
         before: discord.VoiceState,
         after: discord.VoiceState,
     ) -> None:
-        """Schedule a 5-min auto-disconnect when the bot's VC becomes empty."""
+        """Disconnect immediately when the last human leaves the bot's VC.
+
+        Skipped when ``player.stay_alone`` is set via ``/stayalone``.
+        """
         if member.bot:
             return
         guild = member.guild
         player = guild.voice_client
         if not isinstance(player, MusicPlayer) or player.channel is None:
             return
-        # Affected only if the user left or was moved away from the bot's VC.
-        if (before.channel and before.channel.id == player.channel.id) and (
+        left_bots_vc = (before.channel and before.channel.id == player.channel.id) and (
             after.channel is None or after.channel.id != player.channel.id
-        ):
-            self._maybe_schedule_auto_disconnect(player)
-        # Cancel scheduled disconnect if a human just joined the bot's VC.
-        if after.channel and after.channel.id == player.channel.id:
-            task = self._auto_disconnect_tasks.pop(guild.id, None)
-            if task is not None and not task.done():
-                task.cancel()
-
-    def _maybe_schedule_auto_disconnect(self, player: MusicPlayer) -> None:
-        """SPEC §7.1: schedule only when (no humans) AND (queue empty) AND (not playing)."""
-        if player.channel is None or player.guild is None:
+        )
+        if not left_bots_vc:
             return
         if humans_in_channel(player.channel) > 0:
             return
-        if player.playing or not player.queue.is_empty:
+        if player.stay_alone:
             return
-        guild_id = player.guild.id
-        if (
-            guild_id in self._auto_disconnect_tasks
-            and not self._auto_disconnect_tasks[guild_id].done()
-        ):
-            return
-        self._auto_disconnect_tasks[guild_id] = asyncio.create_task(
-            self._auto_disconnect_after_idle(player),
-            name=f"auto-disconnect-{guild_id}",
-        )
-
-    async def _auto_disconnect_after_idle(self, player: MusicPlayer) -> None:
-        try:
-            await asyncio.sleep(_AUTO_DISCONNECT_SEC)
-        except asyncio.CancelledError:
-            return
-        # Re-check conditions: still empty + still nothing playing/queued.
-        if player.channel is None:
-            return
-        if humans_in_channel(player.channel) > 0:
-            return
-        if player.playing or not player.queue.is_empty:
-            return
-        logger.info(
-            "Auto-disconnect after %ds idle",
-            _AUTO_DISCONNECT_SEC,
-            extra={"bot_name": self.bot.bot_name},
-        )
+        logger.info("Auto-disconnect: VC empty", extra={"bot_name": self.bot.bot_name})
         await self._teardown_player(player)
 
     @commands.Cog.listener()
@@ -199,7 +191,3 @@ class VoiceCog(commands.Cog):
         # (loop=track or loop=queue keeps it alive). SPEC §7.9.2: bound requester memory.
         if payload.track.identifier and player.queue.mode == wavelink.QueueMode.normal:
             player.requesters.pop(payload.track.identifier, None)
-        if player.channel is None or player.guild is None:
-            return
-        if humans_in_channel(player.channel) == 0 and player.queue.is_empty:
-            self._maybe_schedule_auto_disconnect(player)
