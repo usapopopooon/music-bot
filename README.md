@@ -1,6 +1,6 @@
 # music-bot
 
-Discord 用の音楽 Bot。Lavalink ベースで安定再生、ボタン UI 中心の操作、ギルドごとの音量設定の永続化が特徴。詳細仕様は [SPEC.md](SPEC.md) を参照。
+Discord 用の音楽 Bot。Lavalink ベースで安定再生。詳細仕様は [SPEC.md](SPEC.md) を参照。
 
 ## 主な機能
 
