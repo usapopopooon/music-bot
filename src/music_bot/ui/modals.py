@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import discord
 import wavelink
 
-from ..player import MusicPlayer
+from ..player import MAX_DISPLAY_VOLUME, MusicPlayer
 from ..utils import embeds
 from ..utils.format import format_duration, truncate
 
@@ -44,8 +44,8 @@ class AddTrackModal(discord.ui.Modal, title="Add to queue"):
 
 class VolumeModal(discord.ui.Modal, title="Set volume"):
     level: discord.ui.TextInput[discord.ui.Modal] = discord.ui.TextInput(
-        label="Volume (0-200)",
-        placeholder="100",
+        label=f"Volume (0-{MAX_DISPLAY_VOLUME})",
+        placeholder="1",
         min_length=1,
         max_length=3,
         required=True,
@@ -63,9 +63,9 @@ class VolumeModal(discord.ui.Modal, title="Set volume"):
                 embed=embeds.error("Volume must be an integer."), ephemeral=True
             )
             return
-        if not 0 <= level <= 200:
+        if not 0 <= level <= MAX_DISPLAY_VOLUME:
             await interaction.response.send_message(
-                embed=embeds.error("Volume must be 0-200."), ephemeral=True
+                embed=embeds.error(f"Volume must be 0-{MAX_DISPLAY_VOLUME}."), ephemeral=True
             )
             return
         if interaction.guild is None:
@@ -79,7 +79,7 @@ class VolumeModal(discord.ui.Modal, title="Set volume"):
                 embed=embeds.error("Not connected."), ephemeral=True
             )
             return
-        await player.set_volume(level)
+        await player.set_display_volume(level)
         from ..bot import MusicBotClient  # noqa: PLC0415
 
         client = interaction.client

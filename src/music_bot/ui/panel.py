@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import discord
 import wavelink
 
-from ..player import LoopMode, MusicPlayer
+from ..player import DEFAULT_DISPLAY_VOLUME, MAX_DISPLAY_VOLUME, LoopMode, MusicPlayer
 from ..utils import embeds as embed_helpers
 from ..utils.checks import can_control_player
 from ..utils.format import format_duration, make_progress_bar, truncate
@@ -481,8 +481,8 @@ class _VolumeStepButton(discord.ui.Button[ControlPanelView]):
         player = await _check_and_get_player(interaction, self.panel)
         if player is None:
             return
-        new = max(0, min(200, player.volume + self.delta))
-        await player.set_volume(new)
+        new = max(0, min(MAX_DISPLAY_VOLUME, player.display_volume + self.delta))
+        await player.set_display_volume(new)
         if interaction.guild is not None and self.panel.bot.user is not None:
             await self.panel.bot.db.set_volume(interaction.guild.id, self.panel.bot.user.id, new)
         await self.panel.refresh()
@@ -492,7 +492,7 @@ class _VolumeStepButton(discord.ui.Button[ControlPanelView]):
 class _VolumeShowButton(discord.ui.Button[ControlPanelView]):
     def __init__(self, panel: ControlPanel) -> None:
         player = panel.player
-        vol = player.volume if player else 100
+        vol = player.display_volume if player else DEFAULT_DISPLAY_VOLUME
         super().__init__(
             style=discord.ButtonStyle.primary,
             emoji="🎚️",
@@ -508,7 +508,7 @@ class _VolumeShowButton(discord.ui.Button[ControlPanelView]):
             return
         from .modals import VolumeModal  # noqa: PLC0415
 
-        await interaction.response.send_modal(VolumeModal(player.volume))
+        await interaction.response.send_modal(VolumeModal(player.display_volume))
 
 
 class _AddButton(discord.ui.Button[ControlPanelView]):

@@ -15,7 +15,7 @@ import wavelink
 from discord import app_commands
 from discord.ext import commands
 
-from ..player import MusicPlayer
+from ..player import DEFAULT_DISPLAY_VOLUME, MusicPlayer
 from ..utils import embeds
 from ..utils.checks import can_control_player, get_user_voice_channel, humans_in_channel
 
@@ -67,8 +67,9 @@ class VoiceCog(commands.Cog):
         self.bot.increment_players()
         if self.bot.user is not None:
             stored = await self.bot.db.get_volume(interaction.guild.id, self.bot.user.id)
-            if stored is not None:
-                await player.set_volume(stored)
+            await player.set_display_volume(
+                stored if stored is not None else DEFAULT_DISPLAY_VOLUME
+            )
         await interaction.response.send_message(
             embed=embeds.success(f"Joined {vc.mention}"), ephemeral=True
         )

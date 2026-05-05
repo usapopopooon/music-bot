@@ -8,7 +8,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from ..player import MusicPlayer
+from ..player import DEFAULT_DISPLAY_VOLUME, MAX_DISPLAY_VOLUME, MusicPlayer
 from ..utils import embeds
 from ..utils.checks import can_control_player
 
@@ -22,13 +22,13 @@ class VolumeCog(commands.Cog):
 
     @app_commands.command(
         name="volume",
-        description="Show or change the playback volume (0-200).",
+        description=f"Show or change the playback volume (0-{MAX_DISPLAY_VOLUME}).",
     )
-    @app_commands.describe(level="Volume level 0-200 (omit to view current).")
+    @app_commands.describe(level=f"Volume level 0-{MAX_DISPLAY_VOLUME} (omit to view current).")
     async def volume(
         self,
         interaction: discord.Interaction,
-        level: app_commands.Range[int, 0, 200] | None = None,
+        level: app_commands.Range[int, 0, MAX_DISPLAY_VOLUME] | None = None,
     ) -> None:
         if interaction.guild is None or self.bot.user is None:
             await interaction.response.send_message(
@@ -39,7 +39,7 @@ class VolumeCog(commands.Cog):
         player = interaction.guild.voice_client
         if not isinstance(player, MusicPlayer):
             stored = await self.bot.db.get_volume(interaction.guild.id, self.bot.user.id)
-            current = stored if stored is not None else 100
+            current = stored if stored is not None else DEFAULT_DISPLAY_VOLUME
             if level is None:
                 await interaction.response.send_message(
                     embed=embeds.info(f"🎚️ Volume: **{current}%** (no active player)"),
@@ -62,11 +62,11 @@ class VolumeCog(commands.Cog):
 
         if level is None:
             await interaction.response.send_message(
-                embed=embeds.info(f"🎚️ Volume: **{player.volume}%**"), ephemeral=True
+                embed=embeds.info(f"🎚️ Volume: **{player.display_volume}%**"), ephemeral=True
             )
             return
 
-        await player.set_volume(level)
+        await player.set_display_volume(level)
         await self.bot.db.set_volume(interaction.guild.id, self.bot.user.id, level)
 
         if player.panel is not None:

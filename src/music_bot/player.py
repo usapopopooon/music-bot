@@ -22,6 +22,19 @@ class LoopMode(enum.StrEnum):
     QUEUE = "queue"
 
 
+# Displayed scale 0..MAX_DISPLAY_VOLUME maps to Lavalink 0..(MAX/2). A displayed 100
+# corresponds to Lavalink 50 — i.e. half of the original audio amplitude — so the
+# Lavalink volume filter never amplifies, eliminating clip-driven hearing damage.
+MAX_DISPLAY_VOLUME = 100
+DEFAULT_DISPLAY_VOLUME = 1
+
+
+def display_to_lavalink(value: int) -> int:
+    value = max(0, min(MAX_DISPLAY_VOLUME, value))
+    # Round up so display=1 stays audible (Lavalink 1) instead of silent.
+    return (value + 1) // 2
+
+
 class MusicPlayer(wavelink.Player):
     """Per-(client × guild) playback state. SPEC §7.7.2 says Players are not shared."""
 
@@ -32,6 +45,16 @@ class MusicPlayer(wavelink.Player):
         self.text_channel: discord.abc.MessageableChannel | None = None
         self.panel: ControlPanel | None = None
         self.requesters: dict[str, int] = {}
+        self._display_volume: int = DEFAULT_DISPLAY_VOLUME
+
+    @property
+    def display_volume(self) -> int:
+        return self._display_volume
+
+    async def set_display_volume(self, value: int) -> None:
+        value = max(0, min(MAX_DISPLAY_VOLUME, value))
+        self._display_volume = value
+        await self.set_volume(display_to_lavalink(value))
 
     def remember_requester(self, track: wavelink.Playable, user_id: int) -> None:
         if track.identifier:

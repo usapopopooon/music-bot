@@ -12,10 +12,17 @@ _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS guild_bot_settings (
   guild_id   BIGINT NOT NULL,
   bot_id     BIGINT NOT NULL,
-  volume     SMALLINT NOT NULL DEFAULT 100 CHECK (volume BETWEEN 0 AND 200),
+  volume     SMALLINT NOT NULL DEFAULT 1 CHECK (volume BETWEEN 0 AND 100),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (guild_id, bot_id)
 );
+
+-- Migrate older deployments where the volume scale was 0..200.
+UPDATE guild_bot_settings SET volume = 100 WHERE volume > 100;
+ALTER TABLE guild_bot_settings DROP CONSTRAINT IF EXISTS guild_bot_settings_volume_check;
+ALTER TABLE guild_bot_settings
+  ADD CONSTRAINT guild_bot_settings_volume_check CHECK (volume BETWEEN 0 AND 100);
+ALTER TABLE guild_bot_settings ALTER COLUMN volume SET DEFAULT 1;
 """
 
 _UPSERT_SQL = """
@@ -62,7 +69,7 @@ class Database:
         return None if row is None else int(row["volume"])
 
     async def set_volume(self, guild_id: int, bot_id: int, volume: int) -> None:
-        if not 0 <= volume <= 200:
+        if not 0 <= volume <= 100:
             raise ValueError(f"volume out of range: {volume}")
         async with self._pool.acquire() as conn:
             await conn.execute(_UPSERT_SQL, guild_id, bot_id, volume)
