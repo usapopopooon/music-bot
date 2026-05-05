@@ -81,13 +81,38 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
+    # Proof-of-Origin Token. Required since YouTube tightened anonymous access in
+    # 2026-Q2 — without it WEB/WEBEMBEDDED return "This video requires login".
+    # Generate a (token, visitorData) pair with
+    #   https://github.com/iv-org/youtube-trusted-session-generator
+    # then set both as env vars on the Lavalink service. Tokens rotate; if playback
+    # starts failing again, regenerate.
+    pot:
+      token: "${YT_PO_TOKEN:}"
+      visitorData: "${YT_VISITOR_DATA:}"
     clients:
-      - MUSIC
+      # Order: highest playback quality first, with each line being a fallback
+      # for the previous one. See youtube-source README for the client matrix.
+      #
+      # Tier 1 — Opus + PoToken (the most reliable since 2026-Q2's login wall;
+      # PoToken only applies to these two clients).
       - WEB
       - WEBEMBEDDED
+      # Tier 2 — Opus, anonymous, full features (Video / Search / Playlist /
+      # Mix + Livestream).
       - ANDROID_VR
+      - MWEB
+      - TVHTML5_SIMPLY
+      # Tier 3 — Opus, anonymous, narrower (no Livestream / Playlist).
       - ANDROID_MUSIC
-      - TVHTML5EMBEDDED
+      # Tier 4 — last-resort layers with known issues.
+      - ANDROID         # "heavily restricted, frequently dysfunctional"
+      - IOS             # no Opus -> playback needs transcoding
+      # Excluded:
+      #   TV     — requires OAuth refresh token; we don't ship one.
+      #   MUSIC  — search-only client; current `lavasrc.providers` use
+      #            `ytsearch:` (not `ytmsearch:`), so MUSIC is never invoked.
+      #            Add it back if you also add `ytmsearch:` to providers.
 
 logging:
   file:

@@ -25,6 +25,8 @@ services:
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:-}
       APPLE_MUSIC_TOKEN: ${APPLE_MUSIC_TOKEN:-}
+      YT_PO_TOKEN: ${YT_PO_TOKEN:-}
+      YT_VISITOR_DATA: ${YT_VISITOR_DATA:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:2333/version"]
       interval: 10s

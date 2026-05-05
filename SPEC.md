@@ -83,8 +83,8 @@ Phase 1 で再生可能な音源と再生経路を正式に定義する。`laval
 
 | 音源 | 取り込み元 | 再生経路 | URL 例 | 認証 |
 |---|---|---|---|---|
-| **YouTube** | `youtube-source` プラグイン | 直接ストリーミング | `https://www.youtube.com/watch?v=...`<br>`https://youtu.be/...`<br>`https://www.youtube.com/playlist?list=...` | 不要 |
-| **YouTube Music** | `youtube-source` プラグイン（同一ハンドラ） | 直接ストリーミング | `https://music.youtube.com/watch?v=...`<br>`https://music.youtube.com/playlist?list=...`<br>`https://music.youtube.com/browse/...` | 不要 |
+| **YouTube** | `youtube-source` プラグイン | 直接ストリーミング | `https://www.youtube.com/watch?v=...`<br>`https://youtu.be/...`<br>`https://www.youtube.com/playlist?list=...` | `YT_PO_TOKEN` + `YT_VISITOR_DATA`（§8.2 / 2026-Q2 以降は実質必須） |
+| **YouTube Music** | `youtube-source` プラグイン（同一ハンドラ） | 直接ストリーミング | `https://music.youtube.com/watch?v=...`<br>`https://music.youtube.com/playlist?list=...`<br>`https://music.youtube.com/browse/...` | 同上 |
 | **Spotify** | LavaSrc（曲名・アーティスト解決） | **YouTube 経由**で再生 | `https://open.spotify.com/track/...`<br>`https://open.spotify.com/album/...`<br>`https://open.spotify.com/playlist/...` | `SPOTIFY_CLIENT_ID` + `SPOTIFY_CLIENT_SECRET`（§8.2） |
 | **Apple Music** | LavaSrc（曲名・アーティスト解決） | **YouTube 経由**で再生 | `https://music.apple.com/.../song/...`<br>`https://music.apple.com/.../album/...`<br>`https://music.apple.com/.../playlist/...` | `APPLE_MUSIC_TOKEN`（§8.2） |
 | **Deezer** | LavaSrc（曲名・アーティスト解決） | **YouTube 経由**で再生 | `https://www.deezer.com/track/...`<br>`https://www.deezer.com/album/...`<br>`https://www.deezer.com/playlist/...` | `DEEZER_ARL`（任意・既定では無効。LavaSrc 4.8+ で arl Cookie が必須化されたため §3.1.5 参照） |
@@ -692,8 +692,9 @@ Bot の Dockerfile / Railway 環境で以下を設定:
 | `LAVALINK_MAX_HEAP_MB` | — | `192` | JVM ヒープ上限（`-Xmx<n>m`）。大規模運用は 384〜512 へ。Railway 上の RAM 設定より 10% ほど小さくすること |
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | — | — | LavaSrc 経由で Spotify を有効化する場合（§3.1.1）。未設定時は Spotify URL のみ無効、他音源は引き続き利用可 |
 | `APPLE_MUSIC_TOKEN` | — | — | LavaSrc 経由で Apple Music を有効化する場合（§3.1.1）。未設定時は Apple Music URL のみ無効、他音源は引き続き利用可 |
+| `YT_PO_TOKEN` / `YT_VISITOR_DATA` | — | — | 型上は任意（未設定でも Lavalink は起動する）だが、YouTube が 2026-Q2 に匿名アクセスへログインを要求するようになったため、**未設定だとほぼ全ての YouTube 再生が "This video requires login" で失敗する**。本番運用では実質必須。[`iv-org/youtube-trusted-session-generator`](https://github.com/iv-org/youtube-trusted-session-generator) で生成。トークンはローテーションするため、再生失敗が再発したら再生成する |
 
-> Deezer は認証情報不要のため環境変数なし。SoundCloud / YouTube / YouTube Music も同様に認証不要（§3.1.1）。
+> Deezer は認証情報不要のため環境変数なし。SoundCloud は認証不要。YouTube / YouTube Music は技術的には PoToken なしでも起動するが、現状ほぼ確実に再生失敗するため運用上必須（§3.1.1）。
 
 `.env.example` を同梱する。
 
