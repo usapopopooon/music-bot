@@ -18,12 +18,17 @@ def format_duration(ms: int | float | None) -> str:
 
 
 def make_progress_bar(position_ms: int, length_ms: int, width: int = PROGRESS_BAR_WIDTH) -> str:
-    """Render a 20-char progress bar with current position marked by 🔘. SPEC §5.2.1."""
+    """Render a `width`-char progress bar with the playhead marked by ●. SPEC §5.2.1.
+
+    Bar uses ▬ (BLACK RECTANGLE) and ● (BLACK CIRCLE), both plain text Unicode glyphs
+    so they render at uniform line-height in Discord embeds. (We previously used 🔘,
+    a graphical emoji, which caused vertical misalignment with the surrounding bar.)
+    """
     if length_ms <= 0 or width <= 0:
-        return "🔘" + "▬" * (width - 1) if width > 0 else ""
+        return "●" + "▬" * (width - 1) if width > 0 else ""
     pos = max(0, min(position_ms, length_ms))
     knob = round(pos / length_ms * (width - 1))
-    return "▬" * knob + "🔘" + "▬" * (width - 1 - knob)
+    return "▬" * knob + "●" + "▬" * (width - 1 - knob)
 
 
 def truncate(text: str, limit: int) -> str:

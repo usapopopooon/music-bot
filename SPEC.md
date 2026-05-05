@@ -201,7 +201,7 @@ DO UPDATE SET volume = EXCLUDED.volume, updated_at = now();
 │ [曲タイトル](URL)                        │
 │ by アーティスト名                        │
 │                                        │
-│ ▬▬▬▬▬🔘▬▬▬▬▬▬▬  01:23 / 03:45        │
+│ ▬▬▬▬▬●▬▬▬▬▬▬▬  01:23 / 03:45         │
 │                                        │
 │ Up next: 次曲タイトル — アーティスト       │
 │ (+ あと N 曲, 残り MM:SS)                │
@@ -211,7 +211,7 @@ DO UPDATE SET volume = EXCLUDED.volume, updated_at = now();
 ```
 
 - サムネイルはトラック artwork。
-- プログレスバーは 20 文字、現在位置を 🔘 で表示。
+- プログレスバーは 20 文字、現在位置を `●` で表示（プレーンテキスト Unicode 文字を使い、Discord 上で行高がズレないようにする）。
 - ライブ配信は時刻欄を `🔴 LIVE` に置換。
 - Up next が無いときは「キューは空です」と表示。
 - Loop / Shuffle / Volume の現在値は **ボタンラベル側**にのみ表示（Embed 本文には載せない。情報の一元化）。
