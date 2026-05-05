@@ -55,7 +55,12 @@ plugins:
     sources:
       spotify: true
       applemusic: true
-      deezer: true
+      # Deezer requires an `arl` cookie since LavaSrc 4.8. We don't ship one, so
+      # leave it off. To enable: get an arl from a logged-in Deezer browser
+      # session, set DEEZER_ARL env var on the lavalink service, and add
+      #   plugins.lavasrc.deezer.arl: "${DEEZER_ARL}"
+      # below.
+      deezer: false
       yandexmusic: false
       flowerytts: false
       youtube: false   # delegated to youtube-source
@@ -66,8 +71,9 @@ plugins:
     applemusic:
       countryCode: "JP"
       mediaAPIToken: "${APPLE_MUSIC_TOKEN:}"
-    deezer:
-      masterDecryptionKey: "g4el58wc0zvf9na1"
+    # deezer:
+    #   arl: "${DEEZER_ARL}"          # required by LavaSrc 4.8+
+    #   masterDecryptionKey: "..."    # optional, see LavaSrc README
     searchLimit: 10
 
   youtube:

@@ -87,7 +87,7 @@ Phase 1 で再生可能な音源と再生経路を正式に定義する。`laval
 | **YouTube Music** | `youtube-source` プラグイン（同一ハンドラ） | 直接ストリーミング | `https://music.youtube.com/watch?v=...`<br>`https://music.youtube.com/playlist?list=...`<br>`https://music.youtube.com/browse/...` | 不要 |
 | **Spotify** | LavaSrc（曲名・アーティスト解決） | **YouTube 経由**で再生 | `https://open.spotify.com/track/...`<br>`https://open.spotify.com/album/...`<br>`https://open.spotify.com/playlist/...` | `SPOTIFY_CLIENT_ID` + `SPOTIFY_CLIENT_SECRET`（§8.2） |
 | **Apple Music** | LavaSrc（曲名・アーティスト解決） | **YouTube 経由**で再生 | `https://music.apple.com/.../song/...`<br>`https://music.apple.com/.../album/...`<br>`https://music.apple.com/.../playlist/...` | `APPLE_MUSIC_TOKEN`（§8.2） |
-| **Deezer** | LavaSrc（曲名・アーティスト解決） | **YouTube 経由**で再生 | `https://www.deezer.com/track/...`<br>`https://www.deezer.com/album/...`<br>`https://www.deezer.com/playlist/...` | 不要（LavaSrc 既定で有効） |
+| **Deezer** | LavaSrc（曲名・アーティスト解決） | **YouTube 経由**で再生 | `https://www.deezer.com/track/...`<br>`https://www.deezer.com/album/...`<br>`https://www.deezer.com/playlist/...` | `DEEZER_ARL`（任意・既定では無効。LavaSrc 4.8+ で arl Cookie が必須化されたため §3.1.5 参照） |
 | **SoundCloud** | Lavalink v4 内蔵 | 直接ストリーミング | `https://soundcloud.com/<user>/<track>`<br>`https://soundcloud.com/<user>/sets/<playlist>` | 不要 |
 | **検索クエリ** | YouTube 検索（`/search` または `/play <非 URL>`） | YouTube 経由 | 自由文（例: `Mr. Children innocent world`） | 不要 |
 
@@ -128,7 +128,12 @@ Phase 1 で再生可能な音源と再生経路を正式に定義する。`laval
 
 - **Spotify**: <https://developer.spotify.com/dashboard> で App を作成し Client ID / Client Secret を取得。
 - **Apple Music**: 開発者アカウントから MusicKit private key を生成し、JWT トークン（最大 6 ヶ月有効）を発行。期限切れ前にローテーション。
-- どちらも未設定の場合、その音源のみ無効化されて他の音源は引き続き利用可能。
+- **Deezer**: LavaSrc 4.8 以降は `arl` Cookie が必須（無いと LavaSrc プラグインが起動失敗するため Lavalink ごと落ちる）。本仕様の既定構成では Deezer は **無効化**しており、必要な場合のみ以下の手順で有効化する:
+  1. Deezer に Web ログインしてブラウザの開発者ツール → Application → Cookies → `deezer.com` ドメインの `arl` の値をコピー
+  2. lavalink サービスの env var に `DEEZER_ARL=<その値>` を追加
+  3. `lavalink/application.yml` で `plugins.lavasrc.sources.deezer: true` に変更し、`plugins.lavasrc.deezer.arl: "${DEEZER_ARL}"` のコメントを外す
+  - arl は数ヶ月でローテーションされるので運用上手間がかかる。Spotify / Apple Music で代替できることが多いので Phase 1 では既定 OFF とした。
+- 上記いずれも未設定の場合、その音源のみ無効化されて他の音源は引き続き利用可能。
 
 ---
 
