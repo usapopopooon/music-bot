@@ -61,7 +61,8 @@ class VoiceCog(commands.Cog):
             )
             return
 
-        player = await vc.connect(cls=MusicPlayer)
+        # See `_ensure_player` in playback.py for the rationale on self_deaf.
+        player = await vc.connect(cls=MusicPlayer, self_deaf=True)
         player.autoplay = wavelink.AutoPlayMode.partial
         self.bot.increment_players()
         if self.bot.user is not None:

@@ -112,7 +112,9 @@ class PlaybackCog(commands.Cog):
             )
             return None
 
-        player = await vc.connect(cls=MusicPlayer)
+        # self_deaf=True: the bot never needs to *receive* audio from the VC — it only
+        # plays. Saves Discord-side bandwidth and surfaces the deafened icon to users.
+        player = await vc.connect(cls=MusicPlayer, self_deaf=True)
         # SPEC §7.3: queue advances automatically on track end (loop modes are handled by Queue.mode).
         player.autoplay = wavelink.AutoPlayMode.partial
         self.bot.increment_players()
