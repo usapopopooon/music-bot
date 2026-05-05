@@ -1,6 +1,6 @@
 # music-bot
 
-Lavalink ベースで再生する Discord 用の音楽 Bot。Lavalink ベースで安定再生。詳細仕様は [SPEC.md](SPEC.md) を参照。
+Lavalink ベースで再生する Discord 用の音楽 Bot。詳細仕様は [SPEC.md](SPEC.md) を参照。
 
 ## 主な機能
 
