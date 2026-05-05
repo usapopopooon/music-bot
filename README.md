@@ -115,7 +115,3 @@ slash コマンドは UI とほぼ 1:1 で揃えてあります。詳細は [SPE
 `railway.toml`（root）と `lavalink/railway.toml` がそれぞれのビルド設定です。
 GitHub Integration で `main` ブランチを watch させると自動デプロイされます。
 リソース目安・Region 選択・エグレス課金などは [SPEC §10](SPEC.md) を参照。
-
-## ライセンス
-
-未設定（必要なら追加してください）。
