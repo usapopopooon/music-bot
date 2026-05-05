@@ -116,26 +116,6 @@ slash コマンドは UI とほぼ 1:1 で揃えてあります。詳細は [SPE
 GitHub Integration で `main` ブランチを watch させると自動デプロイされます。
 リソース目安・Region 選択・エグレス課金などは [SPEC §10](SPEC.md) を参照。
 
-## CI
-
-`.github/workflows/ci.yml` で `ruff` / `mypy` / `pytest` / Docker build を検証。
-`.github/workflows/docker.yml` で `main` push 時に GHCR へ multi-arch push（任意）。
-
-## トラブルシューティング
-
-| 症状 | 確認ポイント |
-|---|---|
-| Bot がオンラインにならない / `Cannot connect to host lavalink:2333 ssl:default` | `LAVALINK_HOST` の指定ミスが大半。**Railway では `<service-name>.railway.internal`**（例: `lavalink.railway.internal`）。docker-compose ではサービス名 `lavalink` のまま。`LAVALINK_PASSWORD` と Lavalink 側 `LAVALINK_SERVER_PASSWORD` も同値に |
-| `/play` でメッセージが出ない | Bot に `Send Messages` / `Embed Links` 権限があるか |
-| 音が出ない | Bot に `Connect` / `Speak` / `Use Voice Activity` 権限があるか、ユーザーがボイスチャンネルにいるか |
-| Spotify / Apple Music URL が解決されない | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` / `APPLE_MUSIC_TOKEN` が Lavalink サービス側に渡っているか |
-| メモリ逼迫の警告が出る | `MEMORY_SOFT_LIMIT_PERCENT` を超過。RAM プランを上げるか、`MAX_PLAYERS_PER_BOT` を絞る |
-| 全 Client がすぐ落ちる | DB 接続 / Lavalink 接続が確立できないとき。Supervisor が 5 回リトライ後 exit 1（Railway が再起動） |
-
-## 仕様・設計
-
-すべての設計判断は [SPEC.md](SPEC.md) に集約されています。マルチボット振り分け、メモリ最適化、UI 仕様などはそちらを参照。
-
 ## ライセンス
 
 未設定（必要なら追加してください）。
